@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogOut, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,14 +44,24 @@ const Navbar: React.FC = () => {
               Home
             </Link>
             {user?.role === 'admin' && (
-              <Link to="/admin" className="text-gray-700 hover:text-brand-orange">
-                Admin Dashboard
-              </Link>
+              <>
+                <Link to="/admin" className="text-gray-700 hover:text-brand-orange">
+                  Admin Dashboard
+                </Link>
+                <Link to="/admin/statistics" className="text-gray-700 hover:text-brand-orange">
+                  Statistics
+                </Link>
+              </>
             )}
             {user?.role === 'restaurant' && (
-              <Link to="/restaurant" className="text-gray-700 hover:text-brand-orange">
-                Restaurant Dashboard
-              </Link>
+              <>
+                <Link to="/restaurant" className="text-gray-700 hover:text-brand-orange">
+                  Restaurant Dashboard
+                </Link>
+                <Link to="/restaurant/statistics" className="text-gray-700 hover:text-brand-orange">
+                  Statistics
+                </Link>
+              </>
             )}
             {!user ? (
               <>
@@ -75,6 +85,22 @@ const Navbar: React.FC = () => {
                   {user.role === 'customer' && (
                     <DropdownMenuItem asChild>
                       <Link to="/orders" className="w-full">My Orders</Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/statistics" className="w-full">
+                        <BarChart className="mr-2 h-4 w-4" />
+                        <span>Statistics</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user.role === 'restaurant' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/restaurant/statistics" className="w-full">
+                        <BarChart className="mr-2 h-4 w-4" />
+                        <span>Statistics</span>
+                      </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={logout}>
@@ -105,14 +131,24 @@ const Navbar: React.FC = () => {
                 Home
               </Link>
               {user?.role === 'admin' && (
-                <Link to="/admin" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
-                  Admin Dashboard
-                </Link>
+                <>
+                  <Link to="/admin" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
+                    Admin Dashboard
+                  </Link>
+                  <Link to="/admin/statistics" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
+                    Statistics
+                  </Link>
+                </>
               )}
               {user?.role === 'restaurant' && (
-                <Link to="/restaurant" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
-                  Restaurant Dashboard
-                </Link>
+                <>
+                  <Link to="/restaurant" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
+                    Restaurant Dashboard
+                  </Link>
+                  <Link to="/restaurant/statistics" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
+                    Statistics
+                  </Link>
+                </>
               )}
               {user?.role === 'customer' && (
                 <Link to="/orders" className="text-gray-700 hover:text-brand-orange" onClick={toggleMenu}>
