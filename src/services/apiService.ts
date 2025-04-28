@@ -4,10 +4,10 @@ import { CartItem, MenuItem, Order, Restaurant, User } from '../types/models';
 import { mockMenuItems, mockOrders, mockRestaurants, mockUsers } from './mockData';
 
 // Base URL for the Laravel API
-const API_BASE_URL = '/api'; // Should be updated to match your Laravel API URL
+const API_BASE_URL = 'https://your-laravel-backend-url.com/api'; // Update this when you deploy your Laravel backend
 
 // Helper function for API requests
-const apiRequest = async (endpoint: string, options = {}) => {
+const apiRequest = async (endpoint: string, options: Record<string, any> = {}) => {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
