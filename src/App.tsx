@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +17,8 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import RestaurantDashboardPage from "./pages/RestaurantDashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminStatisticsPage from "./pages/AdminStatisticsPage";
+import RestaurantStatisticsPage from "./pages/RestaurantStatisticsPage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,22 @@ const App = () => (
                     } 
                   />
                   <Route path="*" element={<NotFoundPage />} />
+                <Route 
+                  path="/admin/statistics" 
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminStatisticsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/restaurant/statistics" 
+                  element={
+                    <ProtectedRoute allowedRoles={["restaurant"]}>
+                      <RestaurantStatisticsPage />
+                    </ProtectedRoute>
+                  } 
+                />
                 </Routes>
               </main>
               <Footer />
