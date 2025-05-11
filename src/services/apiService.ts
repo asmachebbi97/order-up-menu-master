@@ -1,32 +1,92 @@
-
 import { toast } from 'sonner';
 import { CartItem, MenuItem, Order, Restaurant, User } from '../types/models';
 import { mockMenuItems, mockOrders, mockRestaurants, mockUsers } from './mockData';
+import axios from 'axios';
 
 // Base URL for the Laravel API
 const API_BASE_URL = 'https://your-laravel-backend-url.com/api'; // Update this when you deploy your Laravel backend
 
-// Helper function for API requests
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('digital_menu_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
+// Add response interceptor to handle errors
+api.interceptors.response.use(response => {
+  return response;
+}, error => {
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    if (error.response.status === 401) {
+      // Unauthorized, clear auth data
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      toast.error('Your session has expired. Please login again.');
+    }
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.error('No response received:', error.request);
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    console.error('Request error:', error.message);
+  }
+  
+  return Promise.reject(error);
+});
+
+// Helper function for API requests using axios
 const apiRequest = async (endpoint: string, options: Record<string, any> = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const config = {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('digital_menu_token')}`,
-        ...(options.headers || {})
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'API request failed');
+    };
+    
+    const method = options.method || 'GET';
+    const data = options.body ? JSON.parse(options.body) : undefined;
+    
+    let response;
+    
+    if (method === 'GET') {
+      response = await api.get(endpoint, config);
+    } else if (method === 'POST') {
+      response = await api.post(endpoint, data, config);
+    } else if (method === 'PUT') {
+      response = await api.put(endpoint, data, config);
+    } else if (method === 'DELETE') {
+      response = await api.delete(endpoint, config);
+    } else {
+      throw new Error(`Unsupported HTTP method: ${method}`);
     }
 
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('API error:', error);
+    
+    // Fallback to mock data if API call fails
+    if (endpoint.includes('/statistics')) {
+      if (endpoint.includes('/admin')) {
+        return getAdminStatsMock();
+      } else {
+        return getRestaurantStatsMock();
+      }
+    }
+    
     throw error;
   }
 };
@@ -80,6 +140,54 @@ const initializeStorage = (): void => {
   if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(mockOrders));
   }
+};
+
+// Mock data for statistics
+const getAdminStatsMock = () => {
+  return {
+    totalRestaurants: 24,
+    totalOrders: 2543,
+    totalRevenue: 45678,
+    trends: {
+      restaurants: { value: 4, isPositive: true },
+      orders: { value: 12, isPositive: true },
+      revenue: { value: 18, isPositive: true }
+    },
+    topRestaurants: [
+      { name: "Restaurant A", orders: 156, revenue: 12500, customers: 98 },
+      { name: "Restaurant B", orders: 132, revenue: 10800, customers: 85 },
+      { name: "Restaurant C", orders: 98, revenue: 8900, customers: 67 },
+    ],
+    monthlySales: [
+      { date: 'Jan', amount: 25000 },
+      { date: 'Feb', amount: 30000 },
+      { date: 'Mar', amount: 35000 },
+      { date: 'Apr', amount: 32000 },
+    ]
+  };
+};
+
+const getRestaurantStatsMock = () => {
+  return {
+    totalCustomers: 1234,
+    totalOrders: 856,
+    totalRevenue: 12345,
+    trends: {
+      customers: { value: 12, isPositive: true },
+      orders: { value: 8, isPositive: true },
+      revenue: { value: 15, isPositive: true }
+    },
+    monthlySales: [
+      { date: 'Jan', amount: 4000 },
+      { date: 'Feb', amount: 3000 },
+      { date: 'Mar', amount: 5000 },
+      { date: 'Apr', amount: 4500 },
+    ],
+    yearlySales: [
+      { date: '2023', amount: 45000 },
+      { date: '2024', amount: 52000 },
+    ]
+  };
 };
 
 // Initialize on load for mock data fallback
@@ -605,27 +713,7 @@ export const statisticsService = {
       return await apiRequest('/admin/statistics');
     } catch (error) {
       // Fallback to mock data
-      return {
-        totalRestaurants: 24,
-        totalOrders: 2543,
-        totalRevenue: 45678,
-        trends: {
-          restaurants: { value: 4, isPositive: true },
-          orders: { value: 12, isPositive: true },
-          revenue: { value: 18, isPositive: true }
-        },
-        topRestaurants: [
-          { name: "Restaurant A", orders: 156, revenue: 12500, customers: 98 },
-          { name: "Restaurant B", orders: 132, revenue: 10800, customers: 85 },
-          { name: "Restaurant C", orders: 98, revenue: 8900, customers: 67 },
-        ],
-        monthlySales: [
-          { date: 'Jan', amount: 25000 },
-          { date: 'Feb', amount: 30000 },
-          { date: 'Mar', amount: 35000 },
-          { date: 'Apr', amount: 32000 },
-        ]
-      };
+      return getAdminStatsMock();
     }
   },
   
@@ -635,27 +723,7 @@ export const statisticsService = {
       return await apiRequest(`/restaurants/${restaurantId}/statistics`);
     } catch (error) {
       // Fallback to mock data
-      return {
-        totalCustomers: 1234,
-        totalOrders: 856,
-        totalRevenue: 12345,
-        trends: {
-          customers: { value: 12, isPositive: true },
-          orders: { value: 8, isPositive: true },
-          revenue: { value: 15, isPositive: true }
-        },
-        monthlySales: [
-          { date: 'Jan', amount: 4000 },
-          { date: 'Feb', amount: 3000 },
-          { date: 'Mar', amount: 5000 },
-          { date: 'Apr', amount: 4500 },
-        ],
-        yearlySales: [
-          { date: '2023', amount: 45000 },
-          { date: '2024', amount: 52000 },
-        ]
-      };
+      return getRestaurantStatsMock();
     }
   }
 };
-
